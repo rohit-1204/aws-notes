@@ -12,15 +12,15 @@
 1. What is AWS KMS?
 2. Why Use AWS KMS?
 3. Encryption Basics
-4. How AWS KMS Works
-5. Customer Master Keys (KMS Keys)
+4. Symmetric vs Asymmetric Keys
+5. How AWS KMS Works
 6. Types of KMS Keys
 7. Envelope Encryption
 8. Key Policies
 9. Grants
 10. Key Rotation
-11. AWS Service Integrations
-12. Multi-Region Keys
+11. Multi-Region Keys
+12. AWS Service Integrations
 13. CloudTrail Integration
 14. AWS CLI Commands
 15. Best Practices
@@ -37,11 +37,11 @@
 
 After completing this chapter, you will be able to:
 
-- Understand AWS KMS
-- Learn encryption concepts
+- Understand AWS Key Management Service (KMS)
+- Learn encryption fundamentals
 - Create and manage KMS keys
 - Encrypt and decrypt data
-- Configure IAM and Key Policies
+- Configure key policies and IAM permissions
 - Enable automatic key rotation
 - Secure AWS resources using KMS
 
@@ -49,18 +49,11 @@ After completing this chapter, you will be able to:
 
 # 📖 What is AWS KMS?
 
-**AWS Key Management Service (KMS)** is a fully managed service used to **create, manage, and control encryption keys**.
+**AWS Key Management Service (AWS KMS)** is a fully managed encryption service that lets you create, manage, and control cryptographic keys.
 
-It enables you to encrypt data across AWS services without managing your own encryption infrastructure.
+Instead of managing encryption keys yourself, AWS securely stores and manages them.
 
-AWS KMS is integrated with many AWS services, including:
-
-- 💾 Amazon S3
-- 💽 Amazon EBS
-- 🗄️ Amazon RDS
-- 📂 Amazon EFS
-- 🔐 AWS Secrets Manager
-- 📦 AWS Systems Manager Parameter Store
+AWS KMS integrates with many AWS services for encrypting data.
 
 ---
 
@@ -73,7 +66,7 @@ Application
 
 ↓
 
-Store Plain Text Data
+Store Plain Data
 
 ↓
 
@@ -82,13 +75,13 @@ Security Risk
 
 Problems:
 
-- ❌ Unencrypted data
-- ❌ Difficult key management
-- ❌ Compliance issues
+- ❌ Plain-text data
+- ❌ Manual key management
+- ❌ Difficult compliance
 
 ---
 
-With KMS:
+With AWS KMS:
 
 ```text
 Application
@@ -99,19 +92,20 @@ AWS KMS
 
 ↓
 
-Encryption Key
+Encrypt Data
 
 ↓
 
-Encrypted Data
+Store Securely
 ```
 
 Benefits:
 
-- ✅ Strong encryption
+- ✅ Secure encryption
 - ✅ Centralized key management
 - ✅ Automatic auditing
-- ✅ AWS integration
+- ✅ IAM integration
+- ✅ Compliance support
 
 ---
 
@@ -119,9 +113,7 @@ Benefits:
 
 Encryption converts readable data (**Plaintext**) into unreadable data (**Ciphertext**).
 
-Example:
-
-```
+```text
 Plaintext
 
 ↓
@@ -141,11 +133,67 @@ Decrypt
 Plaintext
 ```
 
-Only users with the correct key can decrypt the data.
+Only authorized users with the correct key can decrypt the data.
 
 ---
 
-# 🧠 How AWS KMS Works
+# 🔑 Symmetric vs Asymmetric Keys
+
+## Symmetric Keys
+
+Uses the **same key** for encryption and decryption.
+
+```text
+Encrypt
+
+↓
+
+Shared Key
+
+↓
+
+Decrypt
+```
+
+Advantages:
+
+- Fast
+- Efficient
+- Used by most AWS services
+
+---
+
+## Asymmetric Keys
+
+Uses two keys:
+
+- Public Key
+- Private Key
+
+```text
+Public Key
+
+↓
+
+Encrypt
+
+↓
+
+Private Key
+
+↓
+
+Decrypt
+```
+
+Commonly used for:
+
+- Digital Signatures
+- Secure Communication
+
+---
+
+# ⚙️ How AWS KMS Works
 
 Workflow:
 
@@ -154,7 +202,7 @@ Application
 
 ↓
 
-Send Data
+Request Encryption
 
 ↓
 
@@ -162,14 +210,14 @@ AWS KMS
 
 ↓
 
-Encrypt
+Encrypt Data
 
 ↓
 
-Store Encrypted Data
+Encrypted Data Stored
 ```
 
-When data is needed:
+When reading:
 
 ```text
 Encrypted Data
@@ -187,39 +235,15 @@ Decrypt
 Application
 ```
 
----
-
-# 🔑 KMS Keys
-
-A **KMS Key** is used to encrypt and decrypt data.
-
-Each key has:
-
-- Key ID
-- ARN
-- Alias
-- Key Policy
-- Rotation Settings
-
-Example:
-
-```
-Alias
-
-alias/project-key
-```
+AWS never exposes the encryption key.
 
 ---
 
-# 🗂️ Types of KMS Keys
-
-AWS supports several key types.
-
----
+# 🔑 Types of KMS Keys
 
 ## AWS Owned Keys
 
-Managed entirely by AWS.
+Created and managed entirely by AWS.
 
 Examples:
 
@@ -227,15 +251,13 @@ Examples:
 - DynamoDB
 - CloudTrail
 
-You cannot manage these keys.
-
 ---
 
 ## AWS Managed Keys
 
-Created automatically for AWS services.
+Automatically created for AWS services.
 
-Example:
+Examples:
 
 ```
 aws/s3
@@ -245,21 +267,21 @@ aws/ebs
 aws/rds
 ```
 
-AWS manages the key, but you can view it.
+You can view them but cannot fully manage them.
 
 ---
 
-## Customer Managed Keys (CMK)
+## Customer Managed Keys (CMKs)
 
 Created and managed by you.
 
-Features:
+Advantages:
 
-- Full control
 - Custom permissions
-- Manual deletion
-- Automatic rotation
+- Key rotation
+- Aliases
 - Cross-account sharing
+- Full lifecycle control
 
 Recommended for production workloads.
 
@@ -267,9 +289,9 @@ Recommended for production workloads.
 
 # 📦 Envelope Encryption
 
-KMS uses **Envelope Encryption**.
+AWS KMS uses **Envelope Encryption** for large data.
 
-Instead of encrypting large files directly:
+Instead of encrypting files directly:
 
 ```text
 Generate Data Key
@@ -291,55 +313,56 @@ Benefits:
 
 - High performance
 - Secure key management
-- Efficient encryption
+- Faster encryption
 
 ---
 
 # 📜 Key Policies
 
-Key Policies determine who can use a KMS key.
+Every KMS key has a **Key Policy**.
+
+Key Policies determine who can:
+
+- Encrypt
+- Decrypt
+- Rotate
+- Delete
+- Manage the key
 
 Example:
 
 ```json
 {
-  "Effect":"Allow",
-  "Principal":{
-      "AWS":"arn:aws:iam::123456789012:root"
-  },
-  "Action":"kms:*",
-  "Resource":"*"
+  "Effect": "Allow",
+  "Action": "kms:*",
+  "Resource": "*"
 }
 ```
-
-Without a Key Policy, a key cannot be accessed.
 
 ---
 
 # 🤝 Grants
 
-A **Grant** provides temporary permissions to use a KMS key.
+A **Grant** gives temporary permission to use a KMS key.
 
-Useful for:
+Used by services like:
 
 - EC2
 - Lambda
 - Auto Scaling
-- Temporary access
+- ECS
 
-Grants are easier to manage than changing key policies.
+Benefits:
+
+- Temporary access
+- No policy modification
+- Easier delegation
 
 ---
 
 # 🔄 Key Rotation
 
-Enable automatic key rotation every year.
-
-Benefits:
-
-- Improved security
-- Compliance
-- Reduced risk
+Automatic key rotation generates a new cryptographic key every year.
 
 ```text
 Old Key
@@ -351,44 +374,25 @@ Rotate
 ↓
 
 New Key
-
-↓
-
-Existing Data Remains Accessible
 ```
 
----
+Benefits:
 
-# ☁️ AWS Service Integrations
+- Better security
+- Compliance
+- Reduced key exposure
 
-AWS KMS integrates with many AWS services.
-
-| Service | Encryption |
-|----------|------------|
-| Amazon S3 | ✅ |
-| Amazon EBS | ✅ |
-| Amazon EFS | ✅ |
-| Amazon RDS | ✅ |
-| DynamoDB | ✅ |
-| Secrets Manager | ✅ |
-| CloudTrail | ✅ |
-| Systems Manager | ✅ |
+Existing encrypted data remains accessible.
 
 ---
 
 # 🌍 Multi-Region Keys
 
-Multi-Region Keys allow the same key to exist in multiple AWS Regions.
-
-Benefits:
-
-- Disaster Recovery
-- Global Applications
-- Simplified Encryption
+Multi-Region Keys allow the same key to exist across AWS Regions.
 
 Example:
 
-```
+```text
 Mumbai
 
 ↓
@@ -400,48 +404,64 @@ Replica
 Singapore
 ```
 
+Benefits:
+
+- Disaster Recovery
+- Global Applications
+- Consistent encryption
+
+---
+
+# ☁️ AWS Services Integrated with KMS
+
+| AWS Service | Supports KMS |
+|-------------|--------------|
+| Amazon S3 | ✅ |
+| Amazon EBS | ✅ |
+| Amazon EFS | ✅ |
+| Amazon RDS | ✅ |
+| DynamoDB | ✅ |
+| Secrets Manager | ✅ |
+| Systems Manager | ✅ |
+| CloudTrail | ✅ |
+| Lambda | ✅ |
+
 ---
 
 # 📊 CloudTrail Integration
 
-Every KMS API call is logged by CloudTrail.
+Every KMS API request is recorded by CloudTrail.
 
-Example:
+Examples:
 
-```
-Encrypt
-
-Decrypt
-
-CreateKey
-
-DisableKey
-
-ScheduleKeyDeletion
-```
+- CreateKey
+- Encrypt
+- Decrypt
+- DisableKey
+- ScheduleKeyDeletion
 
 Useful for:
 
 - Auditing
-- Security investigations
 - Compliance
+- Security investigations
 
 ---
 
 # 🏗️ AWS KMS Architecture
 
 ```text
-            Application
-                 │
-                 ▼
+             Application
+                  │
+                  ▼
              AWS KMS
-        ┌────────┴────────┐
-        ▼                 ▼
-   Encryption Key     Key Policies
+        ┌─────────┴─────────┐
+        ▼                   ▼
+ Encryption Keys      Key Policies
         │
         ▼
 Encrypted Data Stored
- in S3 / EBS / RDS / EFS
+in S3 / EBS / RDS / EFS
 ```
 
 ---
@@ -502,7 +522,7 @@ aws kms describe-key \
 
 ---
 
-## Enable Key Rotation
+## Enable Automatic Rotation
 
 ```bash
 aws kms enable-key-rotation \
@@ -517,43 +537,43 @@ aws kms enable-key-rotation \
 
 ✅ Enable automatic key rotation.
 
-✅ Apply the Principle of Least Privilege.
-
-✅ Monitor KMS activity with CloudTrail.
+✅ Follow the Principle of Least Privilege.
 
 ✅ Use aliases instead of Key IDs.
 
-✅ Never store encryption keys in applications.
+✅ Monitor KMS usage using CloudTrail.
+
+✅ Restrict access using IAM and Key Policies.
 
 ✅ Delete unused keys carefully.
 
-✅ Enable Multi-Region Keys for disaster recovery.
+✅ Use Multi-Region Keys for DR workloads.
 
 ---
 
 # 🌍 Common Use Cases
 
-| Use Case | AWS KMS |
-|-----------|---------|
+| Scenario | KMS |
+|-----------|-----|
 | Encrypt S3 Buckets | ✅ |
 | Encrypt EBS Volumes | ✅ |
-| Encrypt RDS Databases | ✅ |
-| Store Secrets | ✅ |
+| Encrypt RDS | ✅ |
+| Secure Secrets | ✅ |
 | Protect API Keys | ✅ |
 | Encrypt Backups | ✅ |
-| Secure Applications | ✅ |
+| Compliance | ✅ |
 
 ---
 
 # 📝 Key Takeaways
 
 - AWS KMS manages encryption keys.
-- Supports AWS Managed and Customer Managed Keys.
-- Integrates with most AWS services.
+- Supports symmetric and asymmetric keys.
 - Uses Envelope Encryption.
+- Integrates with most AWS services.
 - Supports automatic key rotation.
-- CloudTrail records every KMS API call.
-- Essential for AWS security.
+- CloudTrail logs all KMS API activity.
+- Essential for securing cloud workloads.
 
 ---
 
@@ -563,13 +583,14 @@ In this chapter, you learned:
 
 - AWS KMS
 - Encryption Basics
-- KMS Keys
-- Key Types
+- Symmetric & Asymmetric Keys
+- KMS Key Types
 - Envelope Encryption
 - Key Policies
 - Grants
 - Key Rotation
 - Multi-Region Keys
+- AWS Service Integration
 - CloudTrail Integration
 - AWS CLI Commands
 - Best Practices
@@ -584,7 +605,7 @@ In this chapter, you learned:
 2. What is encryption?
 3. What is a KMS Key?
 4. What is the difference between plaintext and ciphertext?
-5. Why do we use aliases?
+5. Why do we use KMS?
 
 ---
 
@@ -594,7 +615,7 @@ In this chapter, you learned:
 7. Compare AWS Managed Keys and Customer Managed Keys.
 8. What is a Key Policy?
 9. What are Grants?
-10. Explain Key Rotation.
+10. Explain automatic key rotation.
 
 ---
 
@@ -602,9 +623,9 @@ In this chapter, you learned:
 
 11. Design a secure encryption strategy using AWS KMS.
 12. Explain Multi-Region Keys.
-13. How does KMS integrate with S3 and RDS?
-14. Explain how CloudTrail works with KMS.
-15. Compare AWS KMS with AWS CloudHSM.
+13. How does KMS integrate with Amazon S3?
+14. Explain CloudTrail integration with KMS.
+15. Compare AWS KMS and AWS CloudHSM.
 
 ---
 
@@ -612,7 +633,7 @@ In this chapter, you learned:
 
 ## Exercise 1
 
-Create a Customer Managed KMS Key.
+Create a Customer Managed Key.
 
 ---
 
@@ -636,7 +657,7 @@ Encrypt an S3 bucket using your KMS key.
 
 ## Exercise 5
 
-Review KMS API activity in CloudTrail.
+Review KMS API events in CloudTrail.
 
 ---
 
@@ -651,14 +672,13 @@ aws-kms-guide.md
 Include:
 
 - AWS KMS Overview
-- Encryption Basics
+- Encryption Concepts
 - KMS Key Types
 - Envelope Encryption
 - Key Policies
-- Grants
 - Key Rotation
 - Multi-Region Keys
-- AWS Service Integrations
+- AWS Integrations
 - AWS CLI Commands
 - Best Practices
 
@@ -683,15 +703,14 @@ git commit -m "Add AWS KMS guide"
 
 # 🚀 What's Next?
 
-In **Chapter 25 – AWS IAM (Identity and Access Management)**, you'll learn:
+In **Chapter 25 – AWS Lambda**, you'll learn:
 
-- 👤 IAM Users
-- 👥 IAM Groups
-- 🎭 IAM Roles
-- 📜 IAM Policies
-- 🔑 Access Keys
-- 🔐 Multi-Factor Authentication (MFA)
-- 🌐 Cross-Account Access
-- 🛡️ IAM Security Best Practices
+- ⚡ Serverless Computing
+- 🚀 Lambda Functions
+- 📦 Deployment Packages
+- 🌐 Event Sources
+- 🔄 Function Triggers
+- 📊 Monitoring with CloudWatch
+- 🔐 IAM Roles
 - 💻 AWS CLI Commands
-- 🚀 Hands-on IAM Labs
+- 🛠️ Hands-on Serverless Projects
