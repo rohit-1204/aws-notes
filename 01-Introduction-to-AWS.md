@@ -125,23 +125,23 @@ Learning AWS is valuable because it is a core skill for:
 
 AWS provides many advantages over traditional infrastructure.
 
-## Scalability
+## 1 Scalability
 
 Increase or decrease resources based on demand.
 
-## High Availability
+## 2 High Availability
 
 Applications can run across multiple data centers.
 
-## Reliability
+## 3 Reliability
 
 Services are designed to minimize downtime.
 
-## Global Reach
+## 4 Global Reach
 
 Deploy applications in multiple countries.
 
-## Security
+## 5 Security
 
 AWS provides advanced security tools and compliance standards.
 
@@ -224,7 +224,7 @@ Examples:
 
 # Cloud Deployment Models
 
-## Public Cloud
+## 1 Public Cloud
 
 Infrastructure shared by many customers.
 
@@ -234,13 +234,13 @@ AWS
 
 ---
 
-## Private Cloud
+## 2 Private Cloud
 
 Infrastructure dedicated to a single organization.
 
 ---
 
-## Hybrid Cloud
+## 3 Hybrid Cloud
 
 Combination of on-premises infrastructure and cloud resources.
 
